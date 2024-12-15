@@ -2,10 +2,14 @@
 <html>
 <head>
     <title>BMI Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .slider-container {
             margin-bottom: 20px;
@@ -16,6 +20,7 @@
         }
         .output {
             margin-top: 10px;
+            text-align: center;
         }
         .bmi-status {
             font-weight: bold;
@@ -66,10 +71,22 @@
             font-size: 0.8em;
             color: #666;
         }
+        @media (max-width: 480px) {
+            body {
+                margin: 10px;
+                font-size: 0.9em;
+            }
+            .slider-container label {
+                font-size: 1em;
+            }
+            .ticks span {
+                font-size: 0.7em;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>BMI Calculator</h1>
+    <h1 style="text-align: center;">BMI Calculator</h1>
 
     <div class="slider-container">
         <label for="height">Height: <span id="heightValue">60</span> inches (<span id="heightFeet">5'0"</span>)</label>
