@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BMI Calculator</title>
+    <title>Health Ratio Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -50,7 +50,10 @@
         .height-slider {
             background: linear-gradient(to right, lightblue 0%, lightblue 100%);
         }
-        .height-slider::-webkit-slider-thumb, .weight-slider::-webkit-slider-thumb {
+        .waist-slider {
+            background: linear-gradient(to right, green 0%, green 40%, orange 40%, orange 60%, red 60%, red 100%);
+        }
+        .height-slider::-webkit-slider-thumb, .weight-slider::-webkit-slider-thumb, .waist-slider::-webkit-slider-thumb {
             appearance: none;
             width: 20px;
             height: 20px;
@@ -58,7 +61,7 @@
             border-radius: 50%;
             cursor: pointer;
         }
-        .height-slider::-moz-range-thumb, .weight-slider::-moz-range-thumb {
+        .height-slider::-moz-range-thumb, .weight-slider::-moz-range-thumb, .waist-slider::-moz-range-thumb {
             width: 20px;
             height: 20px;
             background-color: #444;
@@ -117,6 +120,36 @@
         <div class="bmi-status" id="bmiStatus">Normal</div>
     </div>
 
+    <h1 style="text-align: center;">Waist-to-Height Ratio Calculator</h1>
+
+    <div class="slider-container">
+        <label for="waistHeight">Height: <span id="waistHeightValue">60</span> inches (<span id="waistHeightFeet">5'0"</span>)</label>
+        <input type="range" id="waistHeight" class="slider height-slider" min="48" max="84" value="60">
+        <div class="ticks">
+            <span>4'0"</span>
+            <span>5'0"</span>
+            <span>6'0"</span>
+            <span>7'0"</span>
+        </div>
+    </div>
+
+    <div class="slider-container">
+        <label for="waist">Waist: <span id="waistValue">30</span> inches</label>
+        <input type="range" id="waist" class="slider waist-slider" min="20" max="60" value="30">
+        <div class="ticks">
+            <span>20</span>
+            <span>30</span>
+            <span>40</span>
+            <span>50</span>
+            <span>60</span>
+        </div>
+    </div>
+
+    <div class="output">
+        <h3>Waist-to-Height Ratio: <span id="whRatioValue">0.50</span></h3>
+        <div class="bmi-status" id="whRatioStatus">Healthy</div>
+    </div>
+
     <script>
         const heightSlider = document.getElementById('height');
         const weightSlider = document.getElementById('weight');
@@ -125,6 +158,14 @@
         const weightValue = document.getElementById('weightValue');
         const bmiValue = document.getElementById('bmiValue');
         const bmiStatus = document.getElementById('bmiStatus');
+
+        const waistSlider = document.getElementById('waist');
+        const waistHeightSlider = document.getElementById('waistHeight');
+        const waistValue = document.getElementById('waistValue');
+        const waistHeightValue = document.getElementById('waistHeightValue');
+        const waistHeightFeet = document.getElementById('waistHeightFeet');
+        const whRatioValue = document.getElementById('whRatioValue');
+        const whRatioStatus = document.getElementById('whRatioStatus');
 
         function calculateBMI(heightInInches, weightInPounds) {
             const heightInMeters = heightInInches * 0.0254;
@@ -144,10 +185,30 @@
             }
         }
 
+        function calculateWHRatio(waist, height) {
+            return (waist / height).toFixed(2);
+        }
+
+        function getWHRatioStatus(ratio) {
+            if (ratio < 0.4) {
+                return { status: 'Underweight', className: 'underweight' };
+            } else if (ratio >= 0.4 && ratio < 0.5) {
+                return { status: 'Healthy', className: 'normal' };
+            } else if (ratio >= 0.5 && ratio < 0.6) {
+                return { status: 'Overweight', className: 'overweight' };
+            } else {
+                return { status: 'Obese', className: 'obese' };
+            }
+        }
+
+        function formatHeight(feet, inches) {
+            return `${feet}'${inches}"`;
+        }
+
         function updateWeightSliderColors(height) {
             const minWeight = 80;
             const maxWeight = 300;
-            const segments = 100; // Dividing into 100 segments for better precision
+            const segments = 100;
             let gradient = '';
 
             for (let i = 0; i <= segments; i++) {
@@ -174,12 +235,42 @@
                 gradient += `${color} ${position}%, `;
             }
 
-            gradient = gradient.slice(0, -2); // Remove trailing comma and space
+            gradient = gradient.slice(0, -2);
             weightSlider.style.background = `linear-gradient(to right, ${gradient})`;
         }
 
-        function formatHeight(feet, inches) {
-            return `${feet}'${inches}"`;
+        function updateWaistSliderColors(height) {
+            const minWaist = 20;
+            const maxWaist = 60;
+            const segments = 100;
+            let gradient = '';
+
+            for (let i = 0; i <= segments; i++) {
+                const waist = minWaist + ((maxWaist - minWaist) / segments) * i;
+                const ratio = calculateWHRatio(waist, height);
+                const { className } = getWHRatioStatus(ratio);
+                let color;
+
+                switch (className) {
+                    case 'normal':
+                        color = 'green';
+                        break;
+                    case 'overweight':
+                        color = 'orange';
+                        break;
+                    case 'obese':
+                        color = 'red';
+                        break;
+                    default:
+                        color = 'gray';
+                }
+
+                const position = (i / segments) * 100;
+                gradient += `${color} ${position}%, `;
+            }
+
+            gradient = gradient.slice(0, -2);
+            waistSlider.style.background = `linear-gradient(to right, ${gradient})`;
         }
 
         function updateValues() {
@@ -203,11 +294,34 @@
             updateWeightSliderColors(height);
         }
 
+        function updateWHValues() {
+            const waist = parseInt(waistSlider.value, 10);
+            const height = parseInt(waistHeightSlider.value, 10);
+
+            const feet = Math.floor(height / 12);
+            const inches = height % 12;
+
+            waistValue.textContent = waist;
+            waistHeightValue.textContent = height;
+            waistHeightFeet.textContent = formatHeight(feet, inches);
+
+            const ratio = calculateWHRatio(waist, height);
+            whRatioValue.textContent = ratio;
+
+            const { status, className } = getWHRatioStatus(ratio);
+            whRatioStatus.textContent = status;
+            whRatioStatus.className = `bmi-status ${className}`;
+
+            updateWaistSliderColors(height);
+        }
+
         heightSlider.addEventListener('input', updateValues);
         weightSlider.addEventListener('input', updateValues);
+        waistSlider.addEventListener('input', updateWHValues);
+        waistHeightSlider.addEventListener('input', updateWHValues);
 
-        // Initialize values on load
         updateValues();
+        updateWHValues();
     </script>
 </body>
 </html>
