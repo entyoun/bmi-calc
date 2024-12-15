@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BMI Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .output {
+            margin-top: 10px;
+        }
+        .bmi-status {
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .normal {
+            color: white;
+            background-color: green;
+        }
+        .overweight {
+            color: white;
+            background-color: orange;
+        }
+        .obese {
+            color: white;
+            background-color: red;
+        }
+        .slider {
+            width: 100%;
+            appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        .height-slider {
+            background: linear-gradient(to right, lightblue 0%, lightblue 100%);
+        }
+        .height-slider::-webkit-slider-thumb, .weight-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: #444;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .height-slider::-moz-range-thumb, .weight-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: #444;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>BMI Calculator</h1>
+
+    <div class="slider-container">
+        <label for="height">Height: <span id="heightValue">60</span> inches (<span id="heightFeet">5'0"</span>)</label>
+        <input type="range" id="height" class="slider height-slider" min="48" max="84" value="60">
+        <div class="ticks">
+            <span>4'0"</span>
+            <span>5'0"</span>
+            <span>6'0"</span>
+            <span>7'0"</span>
+        </div>
+    </div>
+
+    <div class="slider-container">
+        <label for="weight">Weight: <span id="weightValue">150</span> pounds</label>
+        <input type="range" id="weight" class="slider weight-slider" min="80" max="300" value="150">
+        <div class="ticks">
+            <span>80</span>
+            <span>120</span>
+            <span>160</span>
+            <span>200</span>
+            <span>240</span>
+            <span>300</span>
+        </div>
+    </div>
+
+    <div class="output">
+        <h3>BMI: <span id="bmiValue">29.3</span></h3>
+        <div class="bmi-status" id="bmiStatus">Normal</div>
+    </div>
+
+    <script>
+        const heightSlider = document.getElementById('height');
+        const weightSlider = document.getElementById('weight');
+        const heightValue = document.getElementById('heightValue');
+        const heightFeet = document.getElementById('heightFeet');
+        const weightValue = document.getElementById('weightValue');
+        const bmiValue = document.getElementById('bmiValue');
+        const bmiStatus = document.getElementById('bmiStatus');
+
+        function calculateBMI(heightInInches, weightInPounds) {
+            const heightInMeters = heightInInches * 0.0254;
+            const weightInKg = weightInPounds * 0.453592;
+            return (weightInKg / (heightInMeters ** 2)).toFixed(1);
+        }
+
+        function getBMIStatus(bmi) {
+            if (bmi < 18.5) {
+                return { status: 'Underweight', className: 'underweight' };
+            } else if (bmi >= 18.5 && bmi < 25) {
+                return { status: 'Normal', className: 'normal' };
+            } else if (bmi >= 25 && bmi < 30) {
+                return { status: 'Overweight', className: 'overweight' };
+            } else {
+                return { status: 'Obese', className: 'obese' };
+            }
+        }
+
+        function updateWeightSliderColors(height) {
+            const minWeight = 80;
+            const maxWeight = 300;
+            const segments = 100; // Dividing into 100 segments for better precision
+            let gradient = '';
+
+            for (let i = 0; i <= segments; i++) {
+                const weight = minWeight + ((maxWeight - minWeight) / segments) * i;
+                const bmi = calculateBMI(height, weight);
+                const { className } = getBMIStatus(bmi);
+                let color;
+
+                switch (className) {
+                    case 'normal':
+                        color = 'green';
+                        break;
+                    case 'overweight':
+                        color = 'orange';
+                        break;
+                    case 'obese':
+                        color = 'red';
+                        break;
+                    default:
+                        color = 'gray';
+                }
+
+                const position = (i / segments) * 100;
+                gradient += `${color} ${position}%, `;
+            }
+
+            gradient = gradient.slice(0, -2); // Remove trailing comma and space
+            weightSlider.style.background = `linear-gradient(to right, ${gradient})`;
+        }
+
+        function formatHeight(feet, inches) {
+            return `${feet}'${inches}"`;
+        }
+
+        function updateValues() {
+            const height = parseInt(heightSlider.value, 10);
+            const weight = parseInt(weightSlider.value, 10);
+
+            const feet = Math.floor(height / 12);
+            const inches = height % 12;
+
+            heightValue.textContent = height;
+            heightFeet.textContent = formatHeight(feet, inches);
+            weightValue.textContent = weight;
+
+            const bmi = calculateBMI(height, weight);
+            bmiValue.textContent = bmi;
+
+            const { status, className } = getBMIStatus(bmi);
+            bmiStatus.textContent = status;
+            bmiStatus.className = `bmi-status ${className}`;
+
+            updateWeightSliderColors(height);
+        }
+
+        heightSlider.addEventListener('input', updateValues);
+        weightSlider.addEventListener('input', updateValues);
+
+        // Initialize values on load
+        updateValues();
+    </script>
+</body>
+</html>
